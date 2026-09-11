@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ilova Ustaxonasi — Saytdan APK yasash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#141826; --bg-deep:#0F1220; --surface:#1C2137; --surface-2:#242A44;
+    --border:#2E3554; --text:#F5F3EE; --text-dim:#A8ADC7;
+    --accent:#4ADEDE; --accent-2:#FF8A5B; --success:#8BD17C;
+    --radius:18px; --radius-sm:10px;
+    --font-head:'Sora',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg-deep);color:var(--text);font-family:var(--font-body);-webkit-tap-highlight-color:transparent;}
+  .shell{max-width:460px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;box-shadow:0 0 60px rgba(0,0,0,.5);}
+  header.top{padding:22px 22px 14px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--border);}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(155deg,var(--accent),#2AA9A9);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:800;color:#0F1220;font-size:16px;flex-shrink:0;}
+  .brand-name{font-family:var(--font-head);font-weight:700;font-size:16px;letter-spacing:.2px;}
+  .brand-sub{font-size:12px;color:var(--text-dim);}
+  .steps-track{display:flex;gap:6px;}
+  .step-dot{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background .25s;}
+  .step-dot.done{background:var(--accent);}
+  .step-dot.active{background:var(--accent-2);}
+  main{flex:1;padding:22px 22px 120px;}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fadein .3s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  h2.step-title{font-family:var(--font-head);font-size:21px;font-weight:700;margin:0 0 4px;}
+  p.step-desc{color:var(--text-dim);font-size:13.5px;margin:0 0 20px;line-height:1.5;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px;color:var(--text);}
+  .field .hint{font-size:11.5px;color:var(--text-dim);margin-top:6px;line-height:1.4;}
+  input[type=text], input[type=number], textarea, select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 13px;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;outline:none;transition:border-color .15s;}
+  input[type=text]:focus, textarea:focus, select:focus{border-color:var(--accent);}
+  textarea{min-height:120px;resize:vertical;font-family:var(--font-mono);font-size:12.5px;line-height:1.6;}
+  .mono-input{font-family:var(--font-mono);}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px;}
+  .toggle-row .label-block{flex:1;}
+  .toggle-row .t-label{font-size:13.5px;font-weight:600;}
+  .toggle-row .t-sub{font-size:11.5px;color:var(--text-dim);margin-top:2px;line-height:1.4;}
+  .switch{position:relative;width:44px;height:26px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:#3A3F5C;border-radius:20px;cursor:pointer;transition:.2s;}
+  .slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+  input:checked + .slider{background:var(--accent);}
+  input:checked + .slider:before{transform:translateX(18px);}
+  input:disabled + .slider{opacity:.5;cursor:not-allowed;}
+  .seg{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;gap:4px;}
+  .seg button{flex:1;border:none;background:transparent;color:var(--text-dim);padding:10px 8px;border-radius:7px;font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;transition:.15s;}
+  .seg button.active{background:var(--accent);color:#0F1220;}
+  .icon-picker{display:flex;align-items:center;gap:14px;}
+  .icon-preview{width:64px;height:64px;border-radius:16px;background:var(--surface);border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+  .icon-preview img{width:100%;height:100%;object-fit:cover;}
+  .icon-preview svg{width:26px;height:26px;stroke:var(--text-dim);}
+  .btn-secondary{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:var(--radius-sm);font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer;}
+  input[type=file]{display:none;}
+  input[type=color]{width:44px;height:38px;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:2px;cursor:pointer;}
+  .color-row{display:flex;align-items:center;gap:12px;}
+  .color-row .swatch-label{font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);}
+  .perm-card{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px;align-items:flex-start;}
+  .perm-icon{width:34px;height:34px;border-radius:9px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+  .perm-info{flex:1;}
+  .perm-title{font-size:13.5px;font-weight:600;}
+  .perm-sub{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+  .perm-code{font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-top:4px;opacity:.8;}
+  .checkbox{position:relative;width:22px;height:22px;flex-shrink:0;margin-top:2px;}
+  .checkbox input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0;}
+  .checkbox .box{position:absolute;inset:0;border:1.5px solid var(--border);border-radius:6px;background:var(--surface-2);}
+  .checkbox input:checked + .box{background:var(--accent);border-color:var(--accent);}
+  .checkbox input:checked + .box:after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #0F1220;border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .checkbox input:disabled + .box{opacity:.6;}
+  .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;}
+  .summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row .k{color:var(--text-dim);}
+  .summary-row .v{font-family:var(--font-mono);font-size:12px;text-align:right;max-width:60%;overflow-wrap:anywhere;}
+  .notice{background:rgba(255,138,91,.1);border:1px solid rgba(255,138,91,.35);border-radius:var(--radius-sm);padding:13px 14px;font-size:12.5px;line-height:1.55;color:#FFC9AC;margin-bottom:16px;}
+  .notice strong{color:var(--accent-2);}
+  .notice a{color:var(--accent);}
+  .success-box{background:rgba(139,209,124,.1);border:1px solid rgba(139,209,124,.35);border-radius:var(--radius-sm);padding:14px;font-size:12.5px;line-height:1.6;color:#CFE9C8;margin-top:16px;}
+  .success-box b{color:var(--success);}
+  .success-box ol{margin:8px 0 0;padding-left:18px;}
+  .success-box a{color:var(--accent);}
+  .error-box{background:rgba(255,90,90,.1);border:1px solid rgba(255,90,90,.35);border-radius:var(--radius-sm);padding:13px 14px;font-size:12.5px;line-height:1.55;color:#FFB8B8;margin-top:16px;display:none;}
+  footer.bottom-bar{position:sticky;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:14px 22px;display:flex;gap:10px;max-width:460px;margin:0 auto;}
+  .btn{flex:1;padding:14px;border-radius:14px;border:none;font-family:var(--font-head);font-weight:700;font-size:14.5px;cursor:pointer;transition:transform .1s, opacity .15s;}
+  .btn:active{transform:scale(.97);}
+  .btn-back{background:var(--surface-2);color:var(--text);flex:0 0 84px;}
+  .btn-next{background:var(--accent);color:#0F1220;}
+  .btn-next:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-generate{background:linear-gradient(120deg,var(--accent-2),#FF6B4A);color:#1A0E08;}
+  ::selection{background:var(--accent);color:#0F1220;}
+  @media (max-width:420px){
+    header.top{padding:18px 16px 12px;}
+    main{padding:18px 16px 120px;}
+    footer.bottom-bar{padding:12px 16px;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">И</div>
+      <div>
+        <div class="brand-name">Ilova Ustaxonasi</div>
+        <div class="brand-sub">Sayt yoki HTML koddan mobil ilova paketi</div>
+      </div>
+    </div>
+    <div class="steps-track">
+      <div class="step-dot" data-dot="1"></div>
+      <div class="step-dot" data-dot="2"></div>
+      <div class="step-dot" data-dot="3"></div>
+      <div class="step-dot" data-dot="4"></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- STEP 1 -->
+    <section class="panel" data-panel="1">
+      <h2 class="step-title">Manbani tanlang</h2>
+      <p class="step-desc">Ilova ichida ochiladigan tarkib — tayyor veb-sayt havolasimi yoki o'zingiz yozgan HTML kodmi?</p>
+
+      <div class="field">
+        <div class="seg" id="sourceSeg">
+          <button type="button" class="active" data-source="url">Veb-sayt havolasi</button>
+          <button type="button" data-source="html">HTML kod</button>
+        </div>
+      </div>
+
+      <div class="field" id="urlField">
+        <label for="siteUrl">Sayt manzili</label>
+        <input type="text" id="siteUrl" class="mono-input" placeholder="https://example.uz">
+        <div class="hint">Ilova ochilganda shu sahifa to'liq ekranda yuklanadi.</div>
+      </div>
+
+      <div class="field" id="htmlField" style="display:none;">
+        <label for="htmlCode">HTML kodi</label>
+        <textarea id="htmlCode" placeholder="&lt;!DOCTYPE html&gt;&#10;&lt;html&gt;...&lt;/html&gt;"></textarea>
+        <div class="hint">Ushbu kod ilovaning bosh sahifasi sifatida to'g'ridan-to'g'ri joylashtiriladi.</div>
+      </div>
+
+      <div class="field">
+        <label for="appName">Ilova nomi</label>
+        <input type="text" id="appName" placeholder="Masalan: Mening Do'konim">
+      </div>
+
+      <div class="field">
+        <label for="packageId">Paket identifikatori</label>
+        <input type="text" id="packageId" class="mono-input" placeholder="com.mening.dokonim">
+        <div class="hint">Har bir ilova Google Play uchun noyob shu ko'rinishdagi ID'ga ega bo'ladi.</div>
+      </div>
+
+      <div class="field">
+        <label for="appVersion">Versiya</label>
+        <input type="text" id="appVersion" class="mono-input" value="1.0.0">
+      </div>
+
+      <div class="field">
+        <label>Ilova belgisi (ikonka)</label>
+        <div class="icon-picker">
+          <div class="icon-preview" id="iconPreview">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg>
+          </div>
+          <div>
+            <button type="button" class="btn-secondary" id="iconPickBtn">Rasm tanlash</button>
+            <div class="hint">PNG/JPG, kvadrat, kamida 512×512 tavsiya etiladi.</div>
+          </div>
+          <input type="file" id="iconInput" accept="image/*">
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2 -->
+    <section class="panel" data-panel="2">
+      <h2 class="step-title">Ilova ruxsatlari</h2>
+      <p class="step-desc">Ilovangizga qaysi qurilma imkoniyatlaridan foydalanish kerakligini belgilang.</p>
+
+      <div class="perm-card">
+        <div class="perm-icon">🌐</div>
+        <div class="perm-info">
+          <div class="perm-title">Internet</div>
+          <div class="perm-sub">Sayt tarkibini yuklash uchun majburiy</div>
+          <div class="perm-code">android.permission.INTERNET</div>
+        </div>
+        <div class="checkbox"><input type="checkbox" checked disabled><span class="box"></span></div>
+      </div>
+
+      <div class="perm-card">
+        <div class="perm-icon">📷</div>
+        <div class="perm-info">
+          <div class="perm-title">Kamera</div>
+          <div class="perm-sub">Rasmga olish yoki QR skanerlash uchun</div>
+          <div class="perm-code">android.permission.CAMERA</div>
+        </div>
+        <div class="checkbox"><input type="checkbox" data-perm="camera"><span class="box"></span></div>
+      </div>
+
+      <div class="perm-card">
+        <div class="perm-icon">🎙️</div>
+        <div class="perm-info">
+          <div class="perm-title">Mikrofon</div>
+          <div class="perm-sub">Ovozli xabar yoki videoqo'ng'iroq uchun</div>
+          <div class="perm-code">android.permission.RECORD_AUDIO</div>
+        </div>
+        <div class="checkbox"><input type="checkbox" data-perm="mic"><span class="box"></span></div>
+      </div>
+
+      <div class="perm-card">
+        <div class="perm-icon">📍</div>
+        <div class="perm-info">
+          <div class="perm-title">Joylashuv</div>
+          <div class="perm-sub">Yetkazib berish yoki xarita uchun</div>
+          <div class="perm-code">android.permission.ACCESS_FINE_LOCATION</div>
+        </div>
+        <div class="checkbox"><input type="checkbox" data-perm="location"><span class="box"></span></div>
+      </div>
+
+      <div class="perm-card">
+        <div class="perm-icon">🔔</div>
+        <div class="perm-info">
+          <div class="perm-title">Bildirishnomalar</div>
+          <div class="perm-sub">Push-xabarlar yuborish uchun</div>
+          <div class="perm-code">android.permission.POST_NOTIFICATIONS</div>
+        </div>
+        <div class="checkbox"><input type="checkbox" data-perm="notif"><span class="box"></span></div>
+      </div>
+
+      <div class="perm-card">
+        <div class="perm-icon">🗂️</div>
+        <div class="perm-info">
+          <div class="perm-title">Fayl xotirasi</div>
+          <div class="perm-sub">Fayl yuklash yoki saqlash uchun</div>
+          <div class="perm-code">android.permission.READ_EXTERNAL_STORAGE</div>
+        </div>
+        <div class="checkbox"><input type="checkbox" data-perm="storage"><span class="box"></span></div>
+      </div>
+
+      <div class="perm-card">
+        <div class="perm-icon">👤</div>
+        <div class="perm-info">
+          <div class="perm-title">Kontaktlar</div>
+          <div class="perm-sub">Do'stlarni taklif qilish funksiyasi uchun</div>
+          <div class="perm-code">android.permission.READ_CONTACTS</div>
+        </div>
+        <div class="checkbox"><input type="checkbox" data-perm="contacts"><span class="box"></span></div>
+      </div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="panel" data-panel="3">
+      <h2 class="step-title">PWA va xatti-harakat</h2>
+      <p class="step-desc">Ilova ekranda o'zini qanday tutishini sozlang.</p>
+
+      <div class="toggle-row">
+        <div class="label-block">
+          <div class="t-label">Oflayn rejim</div>
+          <div class="t-sub">Internet bo'lmaganda oxirgi ko'rilgan sahifani ko'rsatadi</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="offlineMode" checked><span class="slider"></span></label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="label-block">
+          <div class="t-label">Pastga tortib yangilash</div>
+          <div class="t-sub">Foydalanuvchi ekranni pastga tortib sahifani qayta yuklaydi</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="pullRefresh" checked><span class="slider"></span></label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="label-block">
+          <div class="t-label">Ekranni doim yoniq ushlab turish</div>
+          <div class="t-sub">Video yoki o'yin kabi ilovalar uchun foydali</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="keepAwake"><span class="slider"></span></label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="label-block">
+          <div class="t-label">Kattalashtirish (zoom)</div>
+          <div class="t-sub">Foydalanuvchi barmoq bilan yaqinlashtira oladimi</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="allowZoom"><span class="slider"></span></label>
+      </div>
+
+      <div class="field">
+        <label>Orqaga tugmasi bosilganda</label>
+        <div class="seg" id="backSeg">
+          <button type="button" class="active" data-back="navigate">Oldingi sahifaga qaytadi</button>
+          <button type="button" data-back="exit">Ilovadan chiqadi</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="orientation">Ekran yo'nalishi</label>
+        <select id="orientation">
+          <option value="unspecified">Avtomatik (qurilmaga qarab)</option>
+          <option value="portrait">Faqat tik (portret)</option>
+          <option value="landscape">Faqat yotiq (landshaft)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Tashqi havolalar (boshqa domen)</label>
+        <div class="seg" id="externalSeg">
+          <button type="button" class="active" data-ext="browser">Tashqi brauzerda ochiladi</button>
+          <button type="button" data-ext="inside">Ilova ichida ochiladi</button>
+        </div>
+        <div class="hint">Masalan to'lov tizimi yoki ijtimoiy tarmoq havolalari uchun.</div>
+      </div>
+
+      <div class="field">
+        <label>Mavzu rangi va yuklanish ekrani</label>
+        <div class="color-row">
+          <input type="color" id="themeColor" value="#141826">
+          <span class="swatch-label" id="themeColorLabel">Mavzu rangi — #141826</span>
+        </div>
+        <div style="height:8px;"></div>
+        <div class="color-row">
+          <input type="color" id="bgColor" value="#0F1220">
+          <span class="swatch-label" id="bgColorLabel">Fon rangi — #0F1220</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4 -->
+    <section class="panel" data-panel="4">
+      <h2 class="step-title">Tayyor — tekshirib chiqing</h2>
+      <p class="step-desc">Quyidagi sozlamalar bilan loyiha paketi yaratiladi.</p>
+
+      <div class="summary-card" id="summaryBox"></div>
+
+      <div class="notice">
+        <strong>Muhim:</strong> brauzer ichida haqiqiy imzolangan <code>.apk</code> faylni bevosita "quyib" bo'lmaydi — bu Android build tizimini talab qiladi. Tugmani bosganingizda tayyor loyiha ZIP holida yuklab olinadi. Uni haqiqiy <code>.apk</code> ga aylantirish uchun 2 ta yo'ldan birini tanlang — ikkalasi ham bepul.
+      </div>
+
+      <button class="btn btn-generate" style="width:100%;" id="generateBtn">Paketni yaratish va yuklab olish</button>
+
+      <div class="success-box" id="successBox" style="display:none;"></div>
+      <div class="error-box" id="errorBox"></div>
+    </section>
+  </main>
+
+  <footer class="bottom-bar">
+    <button class="btn btn-back" id="backBtn">Orqaga</button>
+    <button class="btn btn-next" id="nextBtn">Davom etish</button>
+  </footer>
+
+</div>
+
+<script>
+'use strict';
+
+/* ---------- STATE ---------- */
+const state = {
+  sourceType: 'url',
+  siteUrl: '',
+  htmlCode: '',
+  appName: '',
+  packageId: '',
+  version: '1.0.0',
+  iconDataUrl: null,
+  permissions: { camera:false, mic:false, location:false, notif:false, storage:false, contacts:false },
+  offlineMode: true,
+  pullRefresh: true,
+  keepAwake: false,
+  allowZoom: false,
+  backBehavior: 'navigate',
+  orientation: 'unspecified',
+  externalLinks: 'browser',
+  themeColor: '#141826',
+  bgColor: '#0F1220'
+};
+
+let step = 1;
+const totalSteps = 4;
+
+/* ---------- HELPERS ---------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function escapeJs(s){
+  // Xavfsiz string literal uchun
+  return JSON.stringify(String(s == null ? '' : s));
+}
+function safeInlineScript(js){
+  // </script> ketma-ketligini buzib yubormaslik uchun
+  return js.replace(/<\/script/gi, '<\\/script');
+}
+function isValidHttpUrl(s){
+  try{
+    const u = new URL(s);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  }catch(_){ return false; }
+}
+function isValidPackageId(s){
+  if(!s || s.length > 155) return false;
+  const parts = s.split('.');
+  if(parts.length < 2) return false;
+  return parts.every(p => /^[a-zA-Z][a-zA-Z0-9_]*$/.test(p));
+}
+function slugify(s){
+  return String(s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'')
+    .slice(0,20) || 'ilova';
+}
+function showError(msg){
+  const box = $('#errorBox');
+  box.style.display = 'block';
+  box.textContent = msg;
+}
+function clearError(){
+  const box = $('#errorBox');
+  box.style.display = 'none';
+  box.textContent = '';
+}
+
+/* ---------- NAVIGATION ---------- */
+function setDots(){
+  $$('.step-dot').forEach(d=>{
+    const n = parseInt(d.dataset.dot,10);
+    d.classList.remove('done','active');
+    if(n < step) d.classList.add('done');
+    else if(n === step) d.classList.add('active');
+  });
+}
+function showStep(n){
+  $$('.panel').forEach(p => p.classList.toggle('active', p.dataset.panel === String(n)));
+  setDots();
+  $('#backBtn').style.visibility = n === 1 ? 'hidden' : 'visible';
+  $('#nextBtn').style.display = n === totalSteps ? 'none' : 'block';
+  if(n === totalSteps) renderSummary();
+  window.scrollTo(0,0);
+}
+$('#backBtn').addEventListener('click', () => { if(step > 1){ step--; showStep(step); }});
+$('#nextBtn').addEventListener('click', () => {
+  if(!validateStep(step)) return;
+  if(step < totalSteps){ step++; showStep(step); }
+});
+
+function validateStep(n){
+  clearError();
+  if(n === 1){
+    const name = $('#appName').value.trim();
+    const pkg  = $('#packageId').value.trim();
+    if(!name){ alert('Ilova nomini kiriting.'); return false; }
+    if(name.length > 40){ alert('Ilova nomi juda uzun (maks 40 belgi).'); return false; }
+    if(!isValidPackageId(pkg)){
+      alert("Paket ID formati: com.masalan.ilova (har bir qism harf bilan boshlanadi)"); return false;
+    }
+    if(state.sourceType === 'url'){
+      const url = $('#siteUrl').value.trim();
+      if(!isValidHttpUrl(url)){ alert("To'g'ri havola kiriting, masalan https://example.uz"); return false; }
+    } else {
+      if(!$('#htmlCode').value.trim()){ alert('HTML kodni kiriting.'); return false; }
+    }
+    state.appName = name;
+    state.packageId = pkg;
+    state.version = $('#appVersion').value.trim() || '1.0.0';
+  }
+  return true;
+}
+
+/* ---------- SOURCE SEGMENT ---------- */
+$$('#sourceSeg button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    $$('#sourceSeg button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.sourceType = btn.dataset.source;
+    $('#urlField').style.display = state.sourceType === 'url' ? 'block' : 'none';
+    $('#htmlField').style.display = state.sourceType === 'html' ? 'block' : 'none';
+  });
+});
+
+$('#backSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  $$('#backSeg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); state.backBehavior = btn.dataset.back;
+});
+$('#externalSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  $$('#externalSeg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); state.externalLinks = btn.dataset.ext;
+});
+
+/* ---------- INPUTS ---------- */
+$('#appName').addEventListener('input', e=>{
+  state.appName = e.target.value;
+  const pkgField = $('#packageId');
+  if(!pkgField.dataset.touched){
+    pkgField.value = 'com.mycompany.' + slugify(e.target.value);
+    state.packageId = pkgField.value;
+  }
+});
+$('#packageId').addEventListener('input', e=>{
+  e.target.dataset.touched = '1'; state.packageId = e.target.value;
+});
+$('#appVersion').addEventListener('input', e=> state.version = e.target.value);
+$('#siteUrl').addEventListener('input', e=> state.siteUrl = e.target.value);
+$('#htmlCode').addEventListener('input', e=> state.htmlCode = e.target.value);
+
+/* ---------- ICON (resize bilan) ---------- */
+$('#iconPickBtn').addEventListener('click', ()=> $('#iconInput').click());
+$('#iconInput').addEventListener('change', e=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024){ alert('Rasm juda katta (maks 5MB).'); return; }
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    // Resize qilib 512x512 PNG qilib olamiz
+    const img = new Image();
+    img.onload = ()=>{
+      const size = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // markazdan crop qilib kvadratga keltiramiz
+      const minSide = Math.min(img.width, img.height);
+      const sx = (img.width - minSide) / 2;
+      const sy = (img.height - minSide) / 2;
+      ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+      try{
+        const resized = canvas.toDataURL('image/png');
+        state.iconDataUrl = resized;
+        $('#iconPreview').innerHTML = '<img src="'+resized+'" alt="icon">';
+      }catch(err){
+        state.iconDataUrl = ev.target.result;
+        $('#iconPreview').innerHTML = '<img src="'+ev.target.result+'" alt="icon">';
+      }
+    };
+    img.onerror = ()=> alert('Rasmni ochib bo\'lmadi.');
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ---------- PERMISSIONS ---------- */
+$$('[data-perm]').forEach(cb=>{
+  cb.addEventListener('change', e=>{ state.permissions[e.target.dataset.perm] = e.target.checked; });
+});
+
+/* ---------- TOGGLES ---------- */
+$('#offlineMode').addEventListener('change', e=> state.offlineMode = e.target.checked);
+$('#pullRefresh').addEventListener('change', e=> state.pullRefresh = e.target.checked);
+$('#keepAwake').addEventListener('change', e=> state.keepAwake = e.target.checked);
+$('#allowZoom').addEventListener('change', e=> state.allowZoom = e.target.checked);
+$('#orientation').addEventListener('change', e=> state.orientation = e.target.value);
+
+$('#themeColor').addEventListener('input', e=>{
+  state.themeColor = e.target.value;
+  $('#themeColorLabel').textContent = 'Mavzu rangi — ' + e.target.value;
+});
+$('#bgColor').addEventListener('input', e=>{
+  state.bgColor = e.target.value;
+  $('#bgColorLabel').textContent = 'Fon rangi — ' + e.target.value;
+});
+
+/* ---------- SUMMARY ---------- */
+function renderSummary(){
+  const permLabels = {camera:'Kamera',mic:'Mikrofon',location:'Joylashuv',notif:'Bildirishnoma',storage:'Fayl xotirasi',contacts:'Kontaktlar'};
+  const activePerms = Object.keys(state.permissions).filter(k=>state.permissions[k]).map(k=>permLabels[k]);
+  const rows = [
+    ['Ilova nomi', state.appName || '—'],
+    ['Paket ID', state.packageId || '—'],
+    ['Versiya', state.version],
+    ['Manba turi', state.sourceType === 'url' ? 'Veb-sayt' : 'HTML kod'],
+    ['Manba', state.sourceType === 'url' ? (state.siteUrl || '—') : (state.htmlCode.slice(0,28)+'…')],
+    ['Ruxsatlar', activePerms.length ? activePerms.join(', ') : 'Faqat Internet'],
+    ['Oflayn rejim', state.offlineMode ? 'Yoqilgan' : "O'chirilgan"],
+    ['Pastga tortib yangilash', state.pullRefresh ? 'Yoqilgan' : "O'chirilgan"],
+    ['Ekranni yoniq ushlash', state.keepAwake ? 'Yoqilgan' : "O'chirilgan"],
+    ['Orqaga tugmasi', state.backBehavior === 'exit' ? 'Ilovadan chiqadi' : 'Sahifa tarixida qaytadi'],
+    ["Ekran yo'nalishi", {unspecified:'Avtomatik',portrait:'Faqat tik',landscape:'Faqat yotiq'}[state.orientation]],
+    ['Tashqi havolalar', state.externalLinks === 'browser' ? 'Tashqi brauzerda' : 'Ilova ichida']
+  ];
+  $('#summaryBox').innerHTML = rows.map(r =>
+    '<div class="summary-row"><span class="k">'+escapeHtml(r[0])+'</span><span class="v">'+escapeHtml(r[1])+'</span></div>'
+  ).join('');
+}
+
+/* ---------- BUILD HELPERS ---------- */
+function androidManifestSnippet(){
+  const map = {
+    camera:'android.permission.CAMERA',
+    mic:'android.permission.RECORD_AUDIO',
+    location:'android.permission.ACCESS_FINE_LOCATION',
+    notif:'android.permission.POST_NOTIFICATIONS',
+    storage:'android.permission.READ_EXTERNAL_STORAGE',
+    contacts:'android.permission.READ_CONTACTS'
+  };
+  const lines = ['<uses-permission android:name="android.permission.INTERNET" />'];
+  Object.keys(state.permissions).forEach(k=>{
+    if(state.permissions[k]) lines.push('<uses-permission android:name="'+map[k]+'" />');
+  });
+  return lines.join('\n');
+}
+
+function buildIndexHtml(){
+  const zoomMeta = state.allowZoom
+    ? 'width=device-width, initial-scale=1.0'
+    : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+
+  const title = escapeHtml(state.appName);
+  const themeColor = escapeHtml(state.themeColor);
+  const bgColor = escapeHtml(state.bgColor);
+
+  // URL rejimida - iframe; HTML rejimida - to'g'ridan-to'g'ri inline
+  let contentBlock;
+  if(state.sourceType === 'url'){
+    contentBlock = '<iframe id="app-frame" src="'+escapeHtml(state.siteUrl)+'" ' +
+      'style="border:none;width:100%;height:100%;position:absolute;inset:0;" ' +
+      'allow="camera; microphone; geolocation; clipboard-read; clipboard-write; fullscreen" ' +
+      'referrerpolicy="no-referrer-when-downgrade"></iframe>';
+  } else {
+    // HTML kod - CSP uchun iframe ishlatamiz (blob orqali) - XSS xavfsizroq
+    contentBlock =
+      '<iframe id="app-frame" style="border:none;width:100%;height:100%;position:absolute;inset:0;" ' +
+      'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-top-navigation-by-user-activation">' +
+      '</iframe>';
+  }
+
+  const inlineJs = buildInlineJs();
+
+  return '<!DOCTYPE html>\n' +
+'<html lang="uz">\n' +
+'<head>\n' +
+'<meta charset="UTF-8">\n' +
+'<meta name="viewport" content="'+zoomMeta+'">\n' +
+'<title>'+title+'</title>\n' +
+'<link rel="manifest" href="manifest.json">\n' +
+'<meta name="theme-color" content="'+themeColor+'">\n' +
+'<style>\n' +
+'  html,body{margin:0;padding:0;height:100%;background:'+bgColor+';overscroll-behavior:contain;overflow:hidden;}\n' +
+'  #app-frame{display:block;}\n' +
+'  #refresh-indicator{position:fixed;top:-50px;left:0;right:0;text-align:center;color:#888;font-family:sans-serif;font-size:13px;transition:top .2s;z-index:999;pointer-events:none;}\n' +
+'  #splash{position:fixed;inset:0;background:'+bgColor+';display:flex;align-items:center;justify-content:center;z-index:1000;transition:opacity .4s;}\n' +
+'  #splash.hide{opacity:0;pointer-events:none;}\n' +
+'</style>\n' +
+'</head>\n' +
+'<body>\n' +
+'  <div id="splash"><div style="color:#888;font-family:sans-serif;font-size:14px;">'+title+'</div></div>\n' +
+'  <div id="refresh-indicator">↻ Yangilanmoqda...</div>\n' +
+'  ' + contentBlock + '\n' +
+'  <script>\n' + safeInlineScript(inlineJs) + '\n  <\/script>\n' +
+'</body>\n' +
+'</html>';
+}
+
+function buildInlineJs(){
+  const lines = [];
+  lines.push('(function(){');
+  lines.push('  "use strict";');
+  lines.push('  var SRC_TYPE = ' + JSON.stringify(state.sourceType) + ';');
+  lines.push('  var HTML_CODE = ' + JSON.stringify(state.htmlCode) + ';');
+  lines.push('  var SITE_URL = ' + JSON.stringify(state.siteUrl) + ';');
+  lines.push('  var BACK_BEHAVIOR = ' + JSON.stringify(state.backBehavior) + ';');
+  lines.push('  var EXTERNAL = ' + JSON.stringify(state.externalLinks) + ';');
+  lines.push('  var PULL_REFRESH = ' + JSON.stringify(!!state.pullRefresh) + ';');
+  lines.push('  var KEEP_AWAKE = ' + JSON.stringify(!!state.keepAwake) + ';');
+  lines.push('  var frame = document.getElementById("app-frame");');
+
+  // Splash yashirish
+  lines.push('  window.addEventListener("load", function(){');
+  lines.push('    var sp = document.getElementById("splash");');
+  lines.push('    if(sp){ setTimeout(function(){ sp.classList.add("hide"); }, 600); }');
+  lines.push('  });');
+
+  // HTML rejimi: iframe'ga blob URL orqali kod yozamiz
+  lines.push('  if(SRC_TYPE === "html" && frame){');
+  lines.push('    try{');
+  lines.push('      var blob = new Blob([HTML_CODE], {type: "text/html;charset=utf-8"});');
+  lines.push('      frame.src = URL.createObjectURL(blob);');
+  lines.push('    }catch(e){');
+  lines.push('      frame.srcdoc = HTML_CODE;');
+  lines.push('    }');
+  lines.push('  }');
+
+  // Tashqi havolalarni boshqarish (faqat URL rejimida)
+  lines.push('  if(SRC_TYPE === "url" && EXTERNAL === "browser"){');
+  lines.push('    document.addEventListener("click", function(ev){');
+  lines.push('      var a = ev.target && ev.target.closest ? ev.target.closest("a") : null;');
+  lines.push('      if(!a) return;');
+  lines.push('      var href = a.getAttribute("href") || "";');
+  lines.push('      if(/^https?:\\/\\//i.test(href)){');
+  lines.push('        try{');
+  lines.push('          var u = new URL(href, SITE_URL);');
+  lines.push('          var base = new URL(SITE_URL);');
+  lines.push('          if(u.host !== base.host){');
+  lines.push('            ev.preventDefault();');
+  lines.push('            if(window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Browser){');
+  lines.push('              Capacitor.Plugins.Browser.open({url: u.href});');
+  lines.push('            } else {');
+  lines.push('              window.open(u.href, "_system");');
+  lines.push('            }');
+  lines.push('          }');
+  lines.push('        }catch(e){}');
+  lines.push('      }');
+  lines.push('    }, true);');
+  lines.push('  }');
+
+  // Orqaga tugmasi
+  lines.push('  function exitApp(){');
+  lines.push('    if(window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App && Capacitor.Plugins.App.exitApp){');
+  lines.push('      Capacitor.Plugins.App.exitApp();');
+  lines.push('    } else if(navigator.app && navigator.app.exitApp){');
+  lines.push('      navigator.app.exitApp();');
+  lines.push('    }');
+  lines.push('  }');
+  lines.push('  document.addEventListener("backbutton", function(e){');
+  lines.push('    if(BACK_BEHAVIOR === "exit"){');
+  lines.push('      e.preventDefault(); exitApp(); return;');
+  lines.push('    }');
+  lines.push('    // navigate rejimi: iframe tarixida orqaga');
+  lines.push('    try{');
+  lines.push('      var w = frame && frame.contentWindow;');
+  lines.push('      if(w && w.history && w.history.length > 1){');
+  lines.push('        e.preventDefault(); w.history.back(); return;');
+  lines.push('      }');
+  lines.push('    }catch(err){}');
+  lines.push('    if(window.history.length > 1){');
+  lines.push('      e.preventDefault(); window.history.back(); return;');
+  lines.push('    }');
+  lines.push('    e.preventDefault(); exitApp();');
+  lines.push('  }, false);');
+
+  // WakeLock
+  lines.push('  if(KEEP_AWAKE && "wakeLock" in navigator){');
+  lines.push('    var wakeLock = null;');
+  lines.push('    function requestWake(){');
+  lines.push('      navigator.wakeLock.request("screen").then(function(wl){ wakeLock = wl; }).catch(function(){});');
+  lines.push('    }');
+  lines.push('    requestWake();');
+  lines.push('    document.addEventListener("visibilitychange", function(){');
+  lines.push('      if(document.visibilityState === "visible") requestWake();');
+  lines.push('    });');
+  lines.push('  }');
+
+  // Pull-to-refresh (tuzatilgan mantiq)
+  lines.push('  if(PULL_REFRESH){');
+  lines.push('    (function(){');
+  lines.push('      var startY = 0, pulling = false, THRESHOLD = 70;');
+  lines.push('      var indicator = document.getElementById("refresh-indicator");');
+  lines.push('      function targetScrollTop(){');
+  lines.push('        try{');
+  lines.push('          if(frame && frame.contentWindow && frame.contentDocument){');
+  lines.push('            var d = frame.contentDocument;');
+  lines.push('            return (d.scrollingElement || d.documentElement).scrollTop || 0;');
+  lines.push('          }');
+  lines.push('        }catch(e){}');
+  lines.push('        return 0;');
+  lines.push('      }');
+  lines.push('      window.addEventListener("touchstart", function(e){');
+  lines.push('        if(targetScrollTop() <= 0){ startY = e.touches[0].clientY; pulling = true; }');
+  lines.push('      }, {passive:true});');
+  lines.push('      window.addEventListener("touchmove", function(e){');
+  lines.push('        if(!pulling) return;');
+  lines.push('        var diff = e.touches[0].clientY - startY;');
+  lines.push('        if(diff > 0){ indicator.style.top = Math.max(-50, Math.min(diff/2, 40) - 50) + "px"; }');
+  lines.push('      }, {passive:true});');
+  lines.push('      window.addEventListener("touchend", function(){');
+  lines.push('        if(!pulling) return;');
+  lines.push('        var currentTop = parseInt(indicator.style.top, 10) || -50;');
+  lines.push('        if(currentTop >= -10){ // yetarli tortilgan');
+  lines.push('          if(SRC_TYPE === "url"){');
+  lines.push('            try{ frame.contentWindow.location.reload(); }');
+  lines.push('            catch(e){ location.reload(); }');
+  lines.push('          } else {');
+  lines.push('            location.reload();');
+  lines.push('          }');
+  lines.push('        }');
+  lines.push('        indicator.style.top = "-50px";');
+  lines.push('        pulling = false;');
+  lines.push('      }, {passive:true});');
+  lines.push('    })();');
+  lines.push('  }');
+
+  // Service worker
+  if(state.offlineMode){
+    lines.push('  if("serviceWorker" in navigator){');
+    lines.push('    navigator.serviceWorker.register("service-worker.js").catch(function(){});');
+    lines.push('  }');
+  }
+
+  lines.push('})();');
+  return lines.join('\n');
+}
+
+function buildManifestJson(){
+  const icons = [];
+  if(state.iconDataUrl){
+    icons.push({ src: "icon.png", sizes: "192x192", type: "image/png", purpose: "any" });
+    icons.push({ src: "icon.png", sizes: "512x512", type: "image/png", purpose: "any maskable" });
+  }
+  return JSON.stringify({
+    name: state.appName,
+    short_name: state.appName.slice(0,12),
+    start_url: "./index.html",
+    display: "standalone",
+    background_color: state.bgColor,
+    theme_color: state.themeColor,
+    orientation: state.orientation === 'unspecified' ? 'any' : state.orientation,
+    icons: icons
+  }, null, 2);
+}
+
+function buildServiceWorker(){
+  const cacheName = (state.packageId || 'app') + '-cache-v' + String(state.version || '1').replace(/\./g,'_');
+  const code = [
+    "var CACHE_NAME = " + JSON.stringify(cacheName) + ";",
+    "var OFFLINE_URLS = ['./index.html', './manifest.json'];",
+    "",
+    "self.addEventListener('install', function(event){",
+    "  event.waitUntil(caches.open(CACHE_NAME).then(function(cache){ return cache.addAll(OFFLINE_URLS); }));",
+    "  self.skipWaiting();",
+    "});",
+    "",
+    "self.addEventListener('activate', function(event){",
+    "  event.waitUntil(caches.keys().then(function(keys){",
+    "    return Promise.all(keys.filter(function(k){ return k !== CACHE_NAME; }).map(function(k){ return caches.delete(k); }));",
+    "  }));",
+    "  self.clients.claim();",
+    "});",
+    "",
+    "self.addEventListener('fetch', function(event){",
+    "  if(event.request.method !== 'GET') return;",
+    "  event.respondWith(",
+    "    fetch(event.request).then(function(response){",
+    "      if(response && response.status === 200 && response.type === 'basic'){",
+    "        var clone = response.clone();",
+    "        caches.open(CACHE_NAME).then(function(cache){ cache.put(event.request, clone); });",
+    "      }",
+    "      return response;",
+    "    }).catch(function(){",
+    "      return caches.match(event.request).then(function(cached){",
+    "        return cached || caches.match('./index.html');",
+    "      });",
+    "    })",
+    "  );",
+    "});"
+  ].join('\n');
+  return code;
+}
+
+function buildCapacitorConfig(){
+  return JSON.stringify({
+    appId: state.packageId,
+    appName: state.appName,
+    webDir: "www",
+    bundledWebRuntime: false,
+    android: { allowMixedContent: true },
+    plugins: {
+      SplashScreen: {
+        launchShowDuration: 1500,
+        backgroundColor: state.bgColor,
+        androidScaleType: "CENTER_CROP"
+      }
+    }
+  }, null, 2);
+}
+
+function buildReadme(){
+  return '# ' + state.appName + ' — Android ilova loyihasi\n\n' +
+'Ushbu papka "' + state.appName + '" uchun tayyor PWA/WebView loyihasini o\'z ichiga oladi.\n\n' +
+'## 1-usul: PWABuilder orqali (eng oson)\n\n' +
+'1. https://www.pwabuilder.com sahifasini oching.\n' +
+'2. Manba veb-sayt havolasi bo\'lsa — o\'sha havolani kiriting va "Start" tugmasini bosing.\n' +
+'3. HTML kod ishlatilgan bo\'lsa — avval shu papkadagi fayllarni bepul static hosting xizmatiga\n' +
+'   (Netlify, GitHub Pages, Vercel) joylashtiring, so\'ng o\'sha manzilni kiriting.\n' +
+'4. "Android" bo\'limini tanlang va "Generate Package" tugmasini bosing.\n' +
+'5. .apk yoki .aab fayl yuklab olinadi.\n\n' +
+'## 2-usul: Capacitor bilan o\'zingiz build qilish\n\n' +
+'Talab: Node.js 18+ va Android Studio.\n\n' +
+'```bash\n' +
+'npm install -g @capacitor/cli\n' +
+'mkdir ' + state.packageId + '-app && cd ' + state.packageId + '-app\n' +
+'npm init -y\n' +
+'npm install @capacitor/core @capacitor/android\n' +
+'npx cap init "' + state.appName + '" "' + state.packageId + '"\n' +
+'mkdir www\n' +
+'# shu ZIP ichidagi index.html, manifest.json, service-worker.js, icon.png\n' +
+'# fayllarini "www" papkasiga ko\'chiring\n' +
+'npx cap add android\n' +
+'npx cap sync\n' +
+'npx cap open android\n' +
+'```\n\n' +
+'Android Studio ochilgach: **Build → Build Bundle(s) / APK(s) → Build APK(s)**.\n' +
+'Tayyor .apk fayl `android/app/build/outputs/apk/debug/` papkasida paydo bo\'ladi.\n\n' +
+'## Ruxsatlar (AndroidManifest.xml)\n\n' +
+'```xml\n' + androidManifestSnippet() + '\n```\n\n' +
+'Bu qatorlarni `android/app/src/main/AndroidManifest.xml` faylidagi `<manifest>` tegi\n' +
+'ichiga, `<application>` tegidan oldin qo\'shing.\n\n' +
+'## Sozlamalar xulosasi\n\n' +
+'- Ilova nomi: ' + state.appName + '\n' +
+'- Paket ID: ' + state.packageId + '\n' +
+'- Versiya: ' + state.version + '\n' +
+'- Oflayn rejim: ' + (state.offlineMode ? "yoqilgan" : "o'chirilgan") + '\n' +
+'- Pastga tortib yangilash: ' + (state.pullRefresh ? "yoqilgan" : "o'chirilgan") + '\n' +
+'- Ekranni yoniq ushlash: ' + (state.keepAwake ? "yoqilgan" : "o'chirilgan") + '\n' +
+'- Orqaga tugmasi: ' + (state.backBehavior === 'exit' ? "ilovadan chiqadi" : "sahifa tarixida qaytadi") + '\n' +
+'- Ekran yo\'nalishi: ' + state.orientation + '\n' +
+'- Tashqi havolalar: ' + (state.externalLinks === 'browser' ? "tashqi brauzerda ochiladi" : "ilova ichida ochiladi") + '\n';
+}
+
+/* ---------- BUILD & DOWNLOAD ---------- */
+async function buildPackage(){
+  if(typeof JSZip === 'undefined'){
+    throw new Error('JSZip kutubxonasi yuklanmadi. Internetni tekshiring.');
+  }
+  const zip = new JSZip();
+  const www = zip.folder('www');
+  www.file('index.html', buildIndexHtml());
+  www.file('manifest.json', buildManifestJson());
+  if(state.offlineMode) www.file('service-worker.js', buildServiceWorker());
+  if(state.iconDataUrl){
+    const base64 = state.iconDataUrl.split(',')[1];
+    if(base64) www.file('icon.png', base64, {base64:true});
+  }
+
+  zip.file('capacitor.config.json', buildCapacitorConfig());
+  zip.file('android-permissions.txt', androidManifestSnippet());
+  zip.file('README.md', buildReadme());
+
+  const blob = await zip.generateAsync({type:'blob', compression:'DEFLATE'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (state.packageId || 'ilova') + '-loyiha.zip';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
+
+function successHtml(){
+  return '<b>Paket tayyor va yuklandi ✅</b><br>Endi haqiqiy <code>.apk</code> faylni olish uchun ikkita bepul yo\'ldan birini tanlang:<br>' +
+  '<ol>' +
+  '<li><b>Eng oson:</b> agar manba veb-sayt havolasi bo\'lsa — <a href="https://www.pwabuilder.com" target="_blank" rel="noopener">pwabuilder.com</a> ga o\'sha havolani kiriting, u avtomatik tahlil qilib Android paketini yaratib beradi.</li>' +
+  '<li><b>To\'liq nazorat uchun:</b> yuklab olingan ZIP ichidagi <code>README.md</code> faylidagi buyruqlarni (Node.js + Capacitor CLI) bajarib, kompyuteringizda yoki Android Studio\'da build qiling.</li>' +
+  '</ol>';
+}
+
+$('#generateBtn').addEventListener('click', async ()=>{
+  const btn = $('#generateBtn');
+  const oldText = btn.textContent;
+  clearError();
+  $('#successBox').style.display = 'none';
+  btn.textContent = 'Tayyorlanmoqda…';
+  btn.disabled = true;
+  try{
+    // Validatsiyani qayta tekshiramiz
+    if(!state.appName || !state.packageId){
+      throw new Error('Iltimos, 1-qadamga qaytib, ilova nomi va paket ID ni to\'ldiring.');
+    }
+    if(state.sourceType === 'url' && !isValidHttpUrl(state.siteUrl)){
+      throw new Error('Sayt manzili noto\'g\'ri.');
+    }
+    if(state.sourceType === 'html' && !state.htmlCode.trim()){
+      throw new Error('HTML kod bo\'sh.');
+    }
+    await buildPackage();
+    $('#successBox').style.display = 'block';
+    $('#successBox').innerHTML = successHtml();
+    btn.textContent = 'Qayta yuklab olish';
+  }catch(err){
+    console.error(err);
+    showError('Xatolik: ' + (err && err.message ? err.message : 'Noma\'lum xato'));
+    btn.textContent = oldText;
+  }
+  btn.disabled = false;
+});
+
+/* ---------- INIT ---------- */
+showStep(1);
+</script>
+</body>
+</html>
